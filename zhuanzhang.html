@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>轉帳 - 交易結果</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background: #f5f5f7;
+      color: #1c1c1e;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    /* iOS Status Bar */
+    .status-bar {
+      height: 44px;
+      background: #40c4b0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 20px 8px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      position: relative;
+      z-index: 10;
+    }
+    .status-bar .time {
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.3px;
+    }
+    .status-bar .icons {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .status-bar .icons svg {
+      display: block;
+    }
+    /* Header */
+    .header {
+      background: #40c4b0;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      color: #fff;
+    }
+    .header-title {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+    /* Info bar */
+    .info-bar {
+      background: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      font-size: 13px;
+      color: #8e8e93;
+      border-bottom: 0.5px solid rgba(0,0,0,0.08);
+    }
+    .info-bar .leave {
+      color: #1c1c1e;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    /* Main content */
+    .content {
+      background: #fff;
+      min-height: calc(100vh - 44px - 48px - 42px);
+      padding: 28px 16px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .section-title {
+      font-size: 17px;
+      font-weight: 600;
+      color: #1c1c1e;
+      margin-bottom: 20px;
+      letter-spacing: 0.3px;
+    }
+    .divider {
+      width: 100%;
+      max-width: 340px;
+      border: none;
+      border-top: 1.5px dashed #c7c7cc;
+      margin-bottom: 22px;
+    }
+    .success-label {
+      font-size: 16px;
+      font-weight: 500;
+      color: #40c4b0;
+      margin-bottom: 18px;
+      align-self: flex-start;
+      padding-left: 4px;
+      max-width: 340px;
+      width: 100%;
+    }
+    /* Card */
+    .card {
+      width: 100%;
+      max-width: 340px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04);
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: nowrap;
+      padding: 13px 16px;
+      font-size: 15px;
+      line-height: 1.35;
+      border-bottom: 0.5px solid rgba(0,0,0,0.06);
+    }
+    .row:last-child {
+      border-bottom: none;
+    }
+    .row .label {
+      color: #8e8e93;
+      flex-shrink: 0;
+      margin-right: 12px;
+      white-space: nowrap;
+    }
+    .row .value {
+      color: #1c1c1e;
+      text-align: right;
+      font-weight: 400;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .row .value.with-eye {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .eye-icon {
+      width: 18px;
+      height: 18px;
+      opacity: 0.55;
+      flex-shrink: 0;
+    }
+    /* 可編輯金額 */
+    .amount-wrap {
+      display: inline;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .amount-wrap:active {
+      opacity: 0.7;
+    }
+    .amount-edit-wrap {
+      display: inline;
+      white-space: nowrap;
+    }
+    .amount-input {
+      width: 88px;
+      text-align: right;
+      font-size: 15px;
+      font-family: inherit;
+      border: 1.5px solid #40c4b0;
+      border-radius: 6px;
+      padding: 2px 6px;
+      outline: none;
+      color: #1c1c1e;
+      background: #fff;
+      -webkit-appearance: none;
+      appearance: none;
+      vertical-align: baseline;
+    }
+    .amount-input::-webkit-outer-spin-button,
+    .amount-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .amount-input[type=number] {
+      -moz-appearance: textfield;
+    }
+    /* Buttons */
+    .btn-group {
+      width: 100%;
+      max-width: 340px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 48px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s ease;
+      letter-spacing: 0.3px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .btn:active {
+      opacity: 0.75;
+    }
+    .btn-primary {
+      background: #40c4b0;
+      color: #fff;
+    }
+    .btn-secondary {
+      background: #40c4b0;
+      color: #fff;
+    }
+    /* iOS Home Indicator area */
+    .home-indicator {
+      position: fixed;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 134px;
+      height: 5px;
+      background: #1c1c1e;
+      border-radius: 100px;
+      opacity: 0.2;
+    }
+    /* Safe area for notched devices */
+    @supports (padding: max(0px)) {
+      .status-bar {
+        padding-top: env(safe-area-inset-top);
+        height: calc(44px + env(safe-area-inset-top));
+      }
+      body {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="time" id="statusTime">--:--</div>
+    <div class="icons">
+      <!-- Cellular -->
+      <svg width="17" height="12" viewBox="0 0 17 12" fill="none">
+        <rect x="0" y="8" width="3" height="4" rx="0.5" fill="white"/>
+        <rect x="4.5" y="5.5" width="3" height="6.5" rx="0.5" fill="white"/>
+        <rect x="9" y="3" width="3" height="9" rx="0.5" fill="white"/>
+        <rect x="13.5" y="0" width="3" height="12" rx="0.5" fill="white"/>
+      </svg>
+      <!-- WiFi -->
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+        <path d="M8 9.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z" fill="white"/>
+        <path d="M4.2 7.3a5.5 5.5 0 0 1 7.6 0" stroke="white" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+        <path d="M1.5 4.5a9 9 0 0 1 13 0" stroke="white" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+      </svg>
+      <!-- Battery -->
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+        <rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="white" stroke-opacity="0.4" stroke-width="1"/>
+        <rect x="2" y="2" width="17" height="8" rx="1.5" fill="white"/>
+        <path d="M23 4v4a2 2 0 0 0 0-4z" fill="white" fill-opacity="0.4"/>
+      </svg>
+    </div>
+  </div>
+  <!-- Navigation Header -->
+  <div class="header">
+    <div class="header-title">轉帳</div>
+  </div>
+  <!-- Data time + Leave -->
+  <div class="info-bar">
+    <span>資料時間：<span id="dataTime">----/--/-- --:--:--</span></span>
+    <span class="leave">離開</span>
+  </div>
+  <!-- Main Content -->
+  <div class="content">
+    <div class="section-title">交易結果</div>
+    <hr class="divider">
+    <div class="success-label">交易成功</div>
+    <div class="card">
+      <div class="row">
+        <span class="label">交易時間</span>
+        <span class="value" id="txTime">----/--/-- --:--:--</span>
+      </div>
+      <div class="row">
+        <span class="label">轉出帳號</span>
+        <span class="value">南台南分行 072508054509</span>
+      </div>
+      <div class="row">
+        <span class="label">轉入銀行</span>
+        <span class="value">華南銀行</span>
+      </div>
+      <div class="row">
+        <span class="label">轉入帳號</span>
+        <span class="value">台灣宅配通 0000240201055816</span>
+      </div>
+      <div class="row">
+        <span class="label">交易金額</span>
+        <span class="value">
+          <span class="amount-wrap" id="amountDisplay" onclick="startEditAmount()">新台幣 $<span id="amountText">2000</span> 元</span>
+          <span class="amount-edit-wrap" id="amountEdit" style="display:none;">新台幣 $<input type="number" class="amount-input" id="amountInput" min="1" step="1" inputmode="numeric" /> 元</span>
+        </span>
+      </div>
+      <div class="row">
+        <span class="label">手續費</span>
+        <span class="value">新台幣 $15 元</span>
+      </div>
+      <div class="row">
+        <span class="label">轉出帳號餘額</span>
+        <span class="value with-eye">
+          <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+          新台幣 $256,850 元
+        </span>
+      </div>
+      <div class="row">
+        <span class="label">交易類別</span>
+        <span class="value">即時轉帳-非約定帳戶</span>
+      </div>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary">通知收款人</button>
+      <button class="btn btn-secondary">回首頁</button>
+    </div>
+  </div>
+  <div class="home-indicator"></div>
+  <script>
+    function pad(n) {
+      return n < 10 ? '0' + n : '' + n;
+    }
+    function formatStatusTime(d) {
+      return pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }
+    function formatFullTime(d) {
+      return d.getFullYear() + '/' +
+             pad(d.getMonth() + 1) + '/' +
+             pad(d.getDate()) + ' ' +
+             pad(d.getHours()) + ':' +
+             pad(d.getMinutes()) + ':' +
+             pad(d.getSeconds());
+    }
+    function updateTimes() {
+      var now = new Date();
+      document.getElementById('statusTime').textContent = formatStatusTime(now);
+      document.getElementById('dataTime').textContent = formatFullTime(now);
+      document.getElementById('txTime').textContent = formatFullTime(now);
+    }
+    updateTimes();
+    setInterval(updateTimes, 1000);
+
+    // 交易金額可點擊修改
+    var currentAmount = 2000;
+
+    function startEditAmount() {
+      document.getElementById('amountDisplay').style.display = 'none';
+      document.getElementById('amountEdit').style.display = 'inline';
+      var input = document.getElementById('amountInput');
+      input.value = currentAmount;
+      input.focus();
+      input.select();
+    }
+
+    function finishEditAmount() {
+      var input = document.getElementById('amountInput');
+      var val = parseInt(input.value, 10);
+      if (!isNaN(val) && val > 0) {
+        currentAmount = val;
+        document.getElementById('amountText').textContent = currentAmount.toLocaleString('en-US');
+      }
+      document.getElementById('amountEdit').style.display = 'none';
+      document.getElementById('amountDisplay').style.display = 'inline';
+    }
+
+    document.getElementById('amountInput').addEventListener('blur', finishEditAmount);
+    document.getElementById('amountInput').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        this.blur();
+      }
+      if (e.key === 'Escape') {
+        this.value = currentAmount;
+        this.blur();
+      }
+    });
+  </script>
+</body>
+</html>
