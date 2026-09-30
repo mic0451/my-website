@@ -12,12 +12,19 @@
       -webkit-tap-highlight-color: transparent;
     }
     html, body {
-      height: 100%;
+      min-height: 100%;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", "PingFang TC", "Microsoft JhengHei", sans-serif;
       background: #f5f5f7;
       color: #1c1c1e;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+    }
+    /* 截圖外框容器 */
+    #captureRoot {
+      background: #f5f5f7;
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
     }
     .status-bar {
       height: 44px;
@@ -108,7 +115,9 @@
       max-width: 340px;
       background: #fff;
       border-radius: 12px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.04);
+      /* 使用真實邊框，避免 html2canvas 丟失 box-shadow 外框 */
+      border: 1px solid #e0e0e0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
       overflow: hidden;
       margin-bottom: 28px;
     }
@@ -264,6 +273,7 @@
   </style>
 </head>
 <body>
+  <div id="captureRoot">
   <div class="status-bar">
     <div class="time" id="statusTime">--:--</div>
     <div class="icons">
@@ -349,6 +359,7 @@
   </button>
   <div class="screenshot-toast" id="screenshotToast">截圖已儲存</div>
   <div class="home-indicator"></div>
+  </div><!-- /captureRoot -->
   <script>
     function pad(n) {
       return n < 10 ? '0' + n : '' + n;
@@ -408,6 +419,7 @@
       var btn = document.getElementById('screenshotBtn');
       var toast = document.getElementById('screenshotToast');
       var home = document.querySelector('.home-indicator');
+      var root = document.getElementById('captureRoot') || document.body;
 
       btn.classList.add('capturing');
       if (home) home.style.visibility = 'hidden';
@@ -421,15 +433,45 @@
             showToast('截圖功能載入中，請稍後再試');
             return;
           }
-          html2canvas(document.body, {
+
+          var w = root.scrollWidth || root.offsetWidth;
+          var h = root.scrollHeight || root.offsetHeight;
+
+          html2canvas(root, {
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#f5f5f7',
             scale: Math.min(window.devicePixelRatio || 2, 3),
+            width: w,
+            height: h,
+            windowWidth: w,
+            windowHeight: h,
             scrollX: 0,
-            scrollY: -window.scrollY,
-            windowWidth: document.documentElement.clientWidth,
-            windowHeight: document.documentElement.scrollHeight
+            scrollY: 0,
+            x: 0,
+            y: 0,
+            foreignObjectRendering: false,
+            logging: false,
+            onclone: function(clonedDoc) {
+              var clonedRoot = clonedDoc.getElementById('captureRoot') || clonedDoc.body;
+              clonedRoot.style.background = '#f5f5f7';
+              clonedRoot.style.minHeight = h + 'px';
+              clonedRoot.style.overflow = 'visible';
+              // 隱藏截圖無關元素
+              var hi = clonedDoc.querySelector('.home-indicator');
+              if (hi) hi.style.display = 'none';
+              var sbtn = clonedDoc.getElementById('screenshotBtn');
+              if (sbtn) sbtn.style.display = 'none';
+              var st = clonedDoc.getElementById('screenshotToast');
+              if (st) st.style.display = 'none';
+              // 強制卡片外框在截圖中可見（html2canvas 常丟 box-shadow）
+              clonedDoc.querySelectorAll('.card').forEach(function(card) {
+                card.style.border = '1px solid #d8d8d8';
+                card.style.boxShadow = 'none';
+                card.style.borderRadius = '12px';
+                card.style.background = '#ffffff';
+              });
+            }
           }).then(function(canvas) {
             downloadCanvas(canvas);
             showToast('截圖已儲存');
@@ -440,7 +482,7 @@
             btn.classList.remove('capturing');
             if (home) home.style.visibility = '';
           });
-        }, 50);
+        }, 80);
       });
     });
   </script>
